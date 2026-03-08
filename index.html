@@ -21,7 +21,7 @@
     --text-sec:     #7a9ab5;
     --text-dim:     #3a5a72;
   }
-  * { margin:0; padding:0; box-sizing:border-box; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
   body { background:var(--bg-deep); font-family:'Rajdhani',sans-serif; color:var(--text-pri); min-height:100vh; overflow-x:hidden; }
   body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background-image:linear-gradient(rgba(0,200,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.025) 1px,transparent 1px); background-size:44px 44px; }
 
@@ -41,12 +41,12 @@
 
   .login-label { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text-dim); letter-spacing:2px; display:block; margin-bottom:8px; text-transform:uppercase; }
   .input-wrap  { position:relative; margin-bottom:6px; }
-  .login-input { width:100%; padding:12px 44px 12px 14px; background:rgba(0,0,0,.5); border:1px solid var(--border-dim); color:var(--text-pri); font-family:'Share Tech Mono',monospace; font-size:14px; letter-spacing:2px; outline:none; transition:border-color .25s; }
+  .login-input { width:100%; padding:12px 44px 12px 14px; background:rgba(0,0,0,.5); border:1px solid var(--border-dim); color:var(--text-pri); font-family:'Share Tech Mono',monospace; font-size:14px; letter-spacing:2px; outline:none; transition:border-color .25s; -webkit-appearance:none; border-radius:0; }
   .login-input:focus { border-color:var(--accent-cyan); }
   .login-input.error { border-color:var(--accent-red); animation:shake .3s ease; }
   .login-input:disabled { opacity:.4; cursor:not-allowed; }
   @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-  .eye-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; background:none; border:none; color:var(--text-dim); font-size:15px; padding:0; }
+  .eye-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; background:none; border:none; color:var(--text-dim); font-size:15px; padding:6px; -webkit-appearance:none; }
   .eye-btn:hover { color:var(--text-sec); }
 
   .login-error-box { margin-bottom:14px; min-height:38px; }
@@ -58,7 +58,7 @@
   .lockout-title { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--accent-red); letter-spacing:1px; margin-bottom:4px; }
   .lockout-count { font-family:'Orbitron',sans-serif; font-size:22px; font-weight:700; color:var(--accent-red); }
 
-  .login-btn { width:100%; padding:13px; background:rgba(0,200,255,.08); border:1px solid var(--accent-cyan); color:var(--accent-cyan); font-family:'Orbitron',sans-serif; font-size:12px; font-weight:700; letter-spacing:3px; cursor:pointer; transition:all .25s; }
+  .login-btn { width:100%; padding:13px; background:rgba(0,200,255,.08); border:1px solid var(--accent-cyan); color:var(--accent-cyan); font-family:'Orbitron',sans-serif; font-size:12px; font-weight:700; letter-spacing:3px; cursor:pointer; transition:all .25s; -webkit-appearance:none; border-radius:0; }
   .login-btn:hover    { background:rgba(0,200,255,.18); box-shadow:0 0 20px rgba(0,200,255,.2); }
   .login-btn.loading  { opacity:.5; pointer-events:none; }
   .login-btn:disabled { opacity:.3; pointer-events:none; cursor:not-allowed; }
@@ -200,6 +200,50 @@
   .modal-btn.cancel{border-color:var(--border-dim);color:var(--text-sec);}
   .modal-btn.cancel:hover{border-color:var(--text-sec);}
 
+  /* ── LOGIN STATS MODAL ── */
+  .stats-modal { width:480px; max-width:95vw; }
+  .stats-modal::before { background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent); }
+  .ls-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px; }
+  .ls-card  { background:rgba(0,0,0,.3); border:1px solid var(--border-dim); padding:12px; text-align:center; }
+  .ls-num   { font-family:'Orbitron',sans-serif; font-size:26px; font-weight:700; }
+  .ls-lbl   { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:1px; margin-top:4px; }
+  .ls-table { width:100%; border-collapse:collapse; font-family:'Share Tech Mono',monospace; font-size:10px; }
+  .ls-table th { color:var(--text-dim); letter-spacing:1px; padding:6px 8px; border-bottom:1px solid var(--border-dim); text-align:left; font-weight:normal; }
+  .ls-table td { padding:6px 8px; border-bottom:1px solid rgba(26,42,58,.5); color:var(--text-sec); }
+  .ls-table tr:hover td { background:rgba(0,200,255,.03); }
+  .badge-ok  { color:var(--accent-green); } .badge-fail { color:var(--accent-red); }
+  .ls-scroll { max-height:200px; overflow-y:auto; }
+  .ls-scroll::-webkit-scrollbar { width:3px; } .ls-scroll::-webkit-scrollbar-thumb { background:var(--border-dim); }
+  .ls-empty  { text-align:center; padding:20px; color:var(--text-dim); font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; }
+
+
+  /* ── INFO MODAL ── */
+  .info-modal { width:560px; max-width:96vw; max-height:90vh; overflow-y:auto; }
+  .info-modal::-webkit-scrollbar { width:3px; } .info-modal::-webkit-scrollbar-thumb { background:var(--border-dim); }
+  .info-modal::before { background:linear-gradient(90deg,transparent,var(--accent-gold),transparent); }
+  .info-modal .modal-title { color:var(--accent-gold); }
+  .reminder-box { background:rgba(255,200,32,.06); border:1px solid rgba(255,200,32,.25); padding:14px 16px; margin-bottom:18px; border-radius:0; }
+  .reminder-icon { font-size:18px; margin-bottom:6px; }
+  .reminder-title { font-family:'Orbitron',sans-serif; font-size:10px; color:var(--accent-gold); letter-spacing:2px; margin-bottom:8px; }
+  .reminder-text { font-size:12px; color:var(--text-sec); line-height:1.7; }
+  .alert-cards { display:flex; flex-direction:column; gap:10px; }
+  .alert-card { border:1px solid var(--border-dim); background:rgba(0,0,0,.25); overflow:hidden; }
+  .alert-card-header { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border-dim); background:rgba(0,0,0,.2); }
+  .alert-card-icon { font-size:18px; }
+  .alert-card-name { font-family:'Orbitron',sans-serif; font-size:11px; font-weight:700; letter-spacing:1px; }
+  .alert-card-risk { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px; padding:2px 7px; border:1px solid; margin-left:auto; }
+  .risk-high   { color:var(--accent-red);   border-color:rgba(255,51,85,.4);   background:rgba(255,51,85,.08); }
+  .risk-med    { color:var(--accent-gold);  border-color:rgba(255,200,32,.4);  background:rgba(255,200,32,.08); }
+  .risk-low    { color:var(--accent-green); border-color:rgba(0,255,136,.4);   background:rgba(0,255,136,.08); }
+  .alert-card-body { padding:12px 14px; display:flex; flex-direction:column; gap:8px; }
+  .alert-logika { font-size:12px; color:var(--text-sec); line-height:1.65; }
+  .alert-logika strong { color:var(--text-pri); }
+  .alert-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
+  .alert-tag { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px; padding:3px 9px; border:1px solid var(--border-dim); color:var(--text-dim); background:rgba(0,0,0,.3); }
+  .alert-tag.time   { border-color:rgba(0,200,255,.3);  color:var(--accent-cyan); }
+  .alert-tag.warn   { border-color:rgba(255,200,32,.3); color:var(--accent-gold); }
+  .alert-tag.danger { border-color:rgba(255,51,85,.3);  color:var(--accent-red); }
+
   /* toast */
   .toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) translateY(20px);z-index:400;padding:10px 22px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;border:1px solid;opacity:0;transition:all .3s;pointer-events:none;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -272,6 +316,8 @@
     <div class="header-right">
       <div class="status-pill"><span class="dot green"></span><span>TELEGRAM LIVE</span></div>
       <div class="clock" id="clock">--:--:--</div>
+      <button class="btn-logout" style="border-color:rgba(255,200,32,.3);color:var(--accent-gold);" onclick="openInfoModal()">📖 INFO ALERT</button>
+      <button class="btn-logout" style="border-color:rgba(0,200,255,.3);color:var(--accent-cyan);" onclick="openLoginStats()">📊 STATS LOGIN</button>
       <button class="btn-logout" onclick="doLogout()">🚪 LOGOUT</button>
     </div>
   </header>
@@ -311,6 +357,129 @@
     </div>
   </div>
   <div class="conn-bar"><div class="dot gold" id="conn-dot"></div><span id="conn-txt">CONNECTING...</span></div>
+</div>
+
+<!-- MODAL INFO ALERT -->
+<div class="modal-overlay" id="modal-info">
+  <div class="modal info-modal">
+    <div class="modal-icon">📖</div>
+    <div class="modal-title">PANDUAN JENIS ALERT</div>
+    <div class="modal-msg" style="margin-bottom:16px;">Pahami setiap alert sebelum eksekusi</div>
+
+    <!-- REMINDER -->
+    <div class="reminder-box">
+      <div class="reminder-icon">⚠️</div>
+      <div class="reminder-title">PENTING — BACA SEBELUM TRADING</div>
+      <div class="reminder-text">
+        Alert ini murni sebagai alat bantu screening dan pemberi informasi tambahan — <strong style="color:var(--accent-gold)">bukan sinyal beli otomatis.</strong> Setiap alert yang muncul tetap wajib di-re-check secara manual sebelum eksekusi, jangan langsung HAKA karena bahkan saya pun tidak berani langsung HAKA. 😄<br><br>
+        Yang paling penting: alert ini hanya bekerja optimal ketika <strong style="color:var(--accent-gold)">IHSG tidak sedang koreksi tajam</strong> dan sentimen pasar dalam kondisi netral hingga positif — karena sehebat apapun setupnya, jika IHSG sedang <em>bloodbath</em> atau sentimen sedang buruk baik dari faktor lokal maupun global, <strong style="color:var(--accent-red)">alert ini tidak akan relevan dan sebaiknya diabaikan terlebih dahulu.</strong>
+      </div>
+    </div>
+
+    <!-- ALERT CARDS -->
+    <div class="alert-cards">
+
+      <div class="alert-card">
+        <div class="alert-card-header">
+          <span class="alert-card-icon">🔥</span>
+          <span class="alert-card-name" style="color:#ff6b35;">Serok Gila</span>
+          <span class="alert-card-risk risk-high">HIGH RISK</span>
+        </div>
+        <div class="alert-card-body">
+          <div class="alert-logika"><strong>Logika:</strong> Saham sudah koreksi 2 hari berturut-turut, lalu koreksi lagi di hari ini. Setup ini memancing <em>panic selling</em> dari retail — setelah itu harga turun mendekati area bandar dan kemudian diangkat kembali.</div>
+          <div class="alert-tags">
+            <span class="alert-tag time">⏰ Opening 09.00–10.00</span>
+            <span class="alert-tag time">📈 IHSG hijau atau sideways</span>
+            <span class="alert-tag danger">⚡ Risiko Tinggi</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert-card">
+        <div class="alert-card-header">
+          <span class="alert-card-icon">🚀</span>
+          <span class="alert-card-name" style="color:var(--accent-green);">Breakout</span>
+          <span class="alert-card-risk risk-med">KONFIRMASI DULU</span>
+        </div>
+        <div class="alert-card-body">
+          <div class="alert-logika"><strong>Logika:</strong> Menangkap saham yang baru saja breakout melewati candle highest sebelumnya di timeframe 5 menit.</div>
+          <div class="alert-tags">
+            <span class="alert-tag warn">⚠️ Waspadai fake breakout</span>
+            <span class="alert-tag warn">Jangan langsung eksekusi saat alert muncul</span>
+            <span class="alert-tag time">✅ Konfirmasi pergerakan selanjutnya dulu</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert-card">
+        <div class="alert-card-header">
+          <span class="alert-card-icon">🟢</span>
+          <span class="alert-card-name" style="color:var(--accent-gold);">Open == Low</span>
+          <span class="alert-card-risk risk-low">BULLISH SIGNAL</span>
+        </div>
+        <div class="alert-card-body">
+          <div class="alert-logika"><strong>Logika:</strong> Menangkap saham yang langsung gas sejak awal opening, ditandai dengan harga <strong>Open = Low</strong> — tidak ada tekanan jual dari bawah sejak pembukaan.</div>
+          <div class="alert-tags">
+            <span class="alert-tag time">⏰ Sesi pagi / jam pertama perdagangan</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert-card">
+        <div class="alert-card-header">
+          <span class="alert-card-icon">💤</span>
+          <span class="alert-card-name" style="color:var(--accent-purple);">Bid Offer Tipis</span>
+          <span class="alert-card-risk risk-low">POTENSI REBOUND</span>
+        </div>
+        <div class="alert-card-body">
+          <div class="alert-logika"><strong>Logika:</strong> Menangkap saham yang sudah sepi dan dalam kondisi tertekan/turun. Kondisi bid-offer tipis mengindikasikan <strong>supply sudah habis</strong> dan berpotensi rebound.</div>
+        </div>
+      </div>
+
+      <div class="alert-card">
+        <div class="alert-card-header">
+          <span class="alert-card-icon">🏦</span>
+          <span class="alert-card-name" style="color:var(--accent-orange);">Ritel Out, Bandar Nyangkut</span>
+          <span class="alert-card-risk risk-med">BSJP SETUP</span>
+        </div>
+        <div class="alert-card-body">
+          <div class="alert-logika"><strong>Logika:</strong> Rata-rata harga pemegang saham (avg) berada di atas harga close, artinya mayoritas pemegang saham sedang <em>floating loss</em>. Diasumsikan retail sudah keluar, sementara bandar nyangkut dan kemungkinan akan menaikkan harga keesokan harinya untuk menjemput modal.</div>
+          <div class="alert-tags">
+            <span class="alert-tag time">⏰ Menjelang penutupan pasar / BSJP</span>
+            <span class="alert-tag warn">⚠️ Belum bisa dipastikan yang keluar retail atau bandar itu sendiri</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="text-align:center;margin-top:18px;">
+      <button class="modal-btn cancel" onclick="closeInfoModal()">TUTUP</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LOGIN STATS -->
+<div class="modal-overlay" id="modal-stats">
+  <div class="modal stats-modal">
+    <div class="modal-icon">📊</div>
+    <div class="modal-title" style="color:var(--accent-cyan);">STATISTIK LOGIN</div>
+    <div class="modal-msg" style="margin-bottom:14px;">Riwayat percobaan login ke dashboard</div>
+    <div class="ls-grid">
+      <div class="ls-card"><div class="ls-num c-green" id="ls-ok">-</div><div class="ls-lbl">BERHASIL</div></div>
+      <div class="ls-card"><div class="ls-num c-red"   id="ls-fail">-</div><div class="ls-lbl">GAGAL</div></div>
+      <div class="ls-card"><div class="ls-num c-cyan"  id="ls-ip">-</div><div class="ls-lbl">IP UNIK</div></div>
+    </div>
+    <div class="ls-scroll">
+      <table class="ls-table">
+        <thead><tr><th>WAKTU</th><th>STATUS</th><th>IP</th><th>KETERANGAN</th></tr></thead>
+        <tbody id="ls-tbody"></tbody>
+      </table>
+    </div>
+    <div style="text-align:center;margin-top:14px;">
+      <button class="modal-btn cancel" onclick="closeLoginStats()">TUTUP</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL RESET -->
@@ -620,6 +789,43 @@ function setConn(s,t){document.getElementById('conn-dot').className=`dot ${s==='
 function nowStr(){return new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 
 document.getElementById('modal-reset').addEventListener('click',function(e){if(e.target===this)closeResetModal();});
+document.getElementById('modal-stats').addEventListener('click',function(e){if(e.target===this)closeLoginStats();});
+document.getElementById('modal-info').addEventListener('click',function(e){if(e.target===this)closeInfoModal();});
+function openInfoModal()  { document.getElementById('modal-info').classList.add('show'); }
+function closeInfoModal() { document.getElementById('modal-info').classList.remove('show'); }
+
+// ════════════════════════════════════════
+// LOGIN STATS
+// ════════════════════════════════════════
+async function openLoginStats() {
+  document.getElementById('modal-stats').classList.add('show');
+  document.getElementById('ls-tbody').innerHTML = '<tr><td colspan="4" class="ls-empty">Memuat data...</td></tr>';
+  try {
+    const res  = await fetch(`${CONFIG.backendUrl}/api/login-stats`, {
+      headers: { 'Authorization': `Bearer ${sessionToken}` }
+    });
+    const data = await res.json();
+    if (!data.ok) { document.getElementById('ls-tbody').innerHTML = '<tr><td colspan="4" class="ls-empty">Gagal memuat data</td></tr>'; return; }
+    document.getElementById('ls-ok').textContent   = data.total_berhasil;
+    document.getElementById('ls-fail').textContent = data.total_gagal;
+    document.getElementById('ls-ip').textContent   = data.ip_unik;
+    const tbody = document.getElementById('ls-tbody');
+    if (!data.history.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="ls-empty">Belum ada riwayat login</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.history.map(e => `
+      <tr>
+        <td>${e.time}</td>
+        <td><span class="${e.status==='berhasil'?'badge-ok':'badge-fail'}">${e.status==='berhasil'?'✅ BERHASIL':'❌ GAGAL'}</span></td>
+        <td>${e.ip}</td>
+        <td>${e.note}</td>
+      </tr>`).join('');
+  } catch(e) {
+    document.getElementById('ls-tbody').innerHTML = '<tr><td colspan="4" class="ls-empty">Tidak bisa terhubung ke server</td></tr>';
+  }
+}
+function closeLoginStats() { document.getElementById('modal-stats').classList.remove('show'); }
 
 // ── AUTO RESTORE SESI SETELAH REFRESH ──
 (async function restoreSession() {
