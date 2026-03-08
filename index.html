@@ -738,18 +738,48 @@ function buildGrid() {
 
 function emptyHTML() { return `<div class="empty"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M9 12h6M12 9v6"/></svg><span>MENUNGGU SINYAL</span></div>`; }
 function cardHTML(s) {
-  const badge = s.subtype === 'marubozu' ? '<span class="scard-badge badge-marubozu">MARUBOZU</span>'
-              : s.subtype === 'hammer'   ? '<span class="scard-badge badge-hammer">SHADOW</span>'
-              : '';
-  return `<div class="scard" id="card-${s.formula}-${s.ticker}"><span class="scard-ticker">${s.ticker}</span><span class="scard-price"><span class="lbl">Rp</span>${s.price||'-'}</span>${badge}<span class="scard-time">${s.time||'--:--'}</span></div>`;
+  let badges = '';
+  const types = s.subtypes || (s.subtype ? [s.subtype] : []);
+  types.forEach(t => {
+    if (t === 'marubozu') badges += '<span class="scard-badge badge-marubozu">MARUBOZU</span>';
+    if (t === 'hammer')   badges += '<span class="scard-badge badge-hammer">SHADOW</span>';
+  });
+  return `<div class="scard" id="card-${s.formula}-${s.ticker}"><span class="scard-ticker">${s.ticker}</span><span class="scard-price"><span class="lbl">Rp</span>${s.price||'-'}</span>${badges}<span class="scard-time">${s.time||'--:--'}</span></div>`;
 }
 
 function addStock(fid, stock) {
   // Gabungkan bsjp_marubozu dan bsjp_hammer ke kotak BSJP
   const bsjpIds = ['bsjp_marubozu', 'bsjp_hammer'];
   if (bsjpIds.includes(fid)) {
-    stock.subtype = fid === 'bsjp_marubozu' ? 'marubozu' : 'hammer';
+    const subtype = fid === 'bsjp_marubozu' ? 'marubozu' : 'hammer';
     fid = 'bsjp';
+    if (!state.formulas[fid]) return;
+    const existing = state.formulas[fid].stocks[stock.ticker];
+    if (existing) {
+      if (!existing.subtypes) existing.subtypes = [existing.subtype];
+      const sudahAdaBadge = existing.subtypes.includes(subtype);
+      const adaBadgeLain  = existing.subtypes.some(t => t !== subtype);
+
+      if (sudahAdaBadge) {
+        // Kriteria SAMA muncul lagi → update harga & waktu ke yang terbaru
+        existing.price = stock.price;
+        existing.time  = stock.time;
+      } else if (adaBadgeLain) {
+        // Kriteria BERBEDA → tambah badge, harga TETAP dari yang pertama
+        existing.subtypes.push(subtype);
+      }
+
+      // Re-render card
+      const card = document.getElementById('card-bsjp-' + stock.ticker);
+      if (card) {
+        const newCard = document.createElement('div');
+        newCard.innerHTML = cardHTML({...existing, formula:'bsjp'});
+        card.replaceWith(newCard.firstElementChild);
+      }
+      return;
+    }
+    stock.subtype  = subtype;
+    stock.subtypes = [subtype];
   }
   if (!state.formulas[fid]) return;
   state.formulas[fid].stocks[stock.ticker] = stock;
@@ -804,7 +834,30 @@ async function poll() {
     const bsjpServerStocks = {};
     Object.entries(data.formulas||{}).forEach(([fid,fd])=>{
       if (fid === 'bsjp_marubozu' || fid === 'bsjp_hammer') {
-        Object.entries(fd.stocks||{}).forEach(([t,s])=>{ s.subtype = fid==='bsjp_marubozu'?'marubozu':'hammer'; bsjpServerStocks[t]=s; if(!state.formulas['bsjp']?.stocks[t]) addStock(fid,s); });
+        Object.entries(fd.stocks||{}).forEach(([t,s])=>{
+          const subtype = fid==='bsjp_marubozu'?'marubozu':'hammer';
+          s.subtype = subtype;
+          // Merge ke bsjpServerStocks — jika sudah ada, gabungkan subtypes
+          if (bsjpServerStocks[t]) {
+            if (!bsjpServerStocks[t].subtypes) bsjpServerStocks[t].subtypes = [bsjpServerStocks[t].subtype];
+            if (!bsjpServerStocks[t].subtypes.includes(subtype)) bsjpServerStocks[t].subtypes.push(subtype);
+          } else {
+            s.subtypes = [subtype];
+            bsjpServerStocks[t] = s;
+          }
+          if (!state.formulas['bsjp']?.stocks[t]) addStock(fid, s);
+          else {
+            // Sudah ada di state — update subtypes jika perlu
+            const ex = state.formulas['bsjp'].stocks[t];
+            if (!ex.subtypes) ex.subtypes = [ex.subtype];
+            if (!ex.subtypes.includes(subtype)) {
+              ex.subtypes.push(subtype);
+              // Re-render card
+              const card = document.getElementById('card-bsjp-' + t);
+              if (card) { const newCard = document.createElement('div'); newCard.innerHTML = cardHTML({...ex, formula:'bsjp'}); card.replaceWith(newCard.firstElementChild); }
+            }
+          }
+        });
       } else {
         Object.entries(fd.stocks||{}).forEach(([t,s])=>{if(!state.formulas[fid]?.stocks[t])addStock(fid,s);});
         Object.keys(state.formulas[fid]?.stocks||{}).forEach(t=>{if(!fd.stocks?.[t])removeStock(fid,t);});
