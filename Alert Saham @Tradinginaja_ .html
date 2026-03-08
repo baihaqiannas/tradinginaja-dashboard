@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tradinginaja Alert Saham</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep:      #050a0f;
+    --bg-card:      #0c1420;
+    --bg-card-h:    #101c2e;
+    --border-dim:   #1a2a3a;
+    --accent-cyan:  #00c8ff;
+    --accent-green: #00ff88;
+    --accent-red:   #ff3355;
+    --accent-gold:  #ffc820;
+    --accent-purple:#a855f7;
+    --accent-orange:#f97316;
+    --text-pri:     #e8f4ff;
+    --text-sec:     #7a9ab5;
+    --text-dim:     #3a5a72;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg-deep); font-family:'Rajdhani',sans-serif; color:var(--text-pri); min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background-image:linear-gradient(rgba(0,200,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.025) 1px,transparent 1px); background-size:44px 44px; }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen { position:fixed; inset:0; z-index:500; display:flex; align-items:center; justify-content:center; background:var(--bg-deep); }
+  .login-box { position:relative; z-index:1; width:380px; padding:40px 36px; background:var(--bg-card); border:1px solid var(--border-dim); animation:loginAppear .5s cubic-bezier(.22,1,.36,1); }
+  @keyframes loginAppear{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  .login-box::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent); animation:scanline 4s ease-in-out infinite; }
+  @keyframes scanline{0%,100%{opacity:.3;transform:scaleX(.3)}50%{opacity:1;transform:scaleX(1)}}
+
+  .login-logo { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:32px; }
+  .login-hex  { width:56px; height:56px; clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); background:rgba(0,200,255,.1); border:2px solid var(--accent-cyan); display:flex; align-items:center; justify-content:center; animation:hex-pulse 3s ease-in-out infinite; }
+  @keyframes hex-pulse{0%,100%{box-shadow:0 0 10px rgba(0,200,255,.3)}50%{box-shadow:0 0 28px rgba(0,200,255,.7)}}
+  .login-hex svg { width:24px; height:24px; fill:var(--accent-cyan); }
+  .login-title  { font-family:'Orbitron',sans-serif; font-size:20px; font-weight:900; color:var(--accent-cyan); letter-spacing:4px; text-shadow:0 0 20px rgba(0,200,255,.5); text-align:center; width:100%; display:block; }
+  .login-sub    { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text-dim); letter-spacing:3px; }
+
+  .login-label { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text-dim); letter-spacing:2px; display:block; margin-bottom:8px; text-transform:uppercase; }
+  .input-wrap  { position:relative; margin-bottom:6px; }
+  .login-input { width:100%; padding:12px 44px 12px 14px; background:rgba(0,0,0,.5); border:1px solid var(--border-dim); color:var(--text-pri); font-family:'Share Tech Mono',monospace; font-size:14px; letter-spacing:2px; outline:none; transition:border-color .25s; }
+  .login-input:focus { border-color:var(--accent-cyan); }
+  .login-input.error { border-color:var(--accent-red); animation:shake .3s ease; }
+  .login-input:disabled { opacity:.4; cursor:not-allowed; }
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  .eye-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; background:none; border:none; color:var(--text-dim); font-size:15px; padding:0; }
+  .eye-btn:hover { color:var(--text-sec); }
+
+  .login-error-box { margin-bottom:14px; min-height:38px; }
+  .login-error     { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--accent-red); letter-spacing:1px; display:block; line-height:1.6; }
+
+  /* Countdown kunci */
+  .lockout-timer { display:none; text-align:center; padding:10px; background:rgba(255,51,85,.08); border:1px solid rgba(255,51,85,.3); margin-bottom:14px; }
+  .lockout-timer.show { display:block; }
+  .lockout-title { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--accent-red); letter-spacing:1px; margin-bottom:4px; }
+  .lockout-count { font-family:'Orbitron',sans-serif; font-size:22px; font-weight:700; color:var(--accent-red); }
+
+  .login-btn { width:100%; padding:13px; background:rgba(0,200,255,.08); border:1px solid var(--accent-cyan); color:var(--accent-cyan); font-family:'Orbitron',sans-serif; font-size:12px; font-weight:700; letter-spacing:3px; cursor:pointer; transition:all .25s; }
+  .login-btn:hover    { background:rgba(0,200,255,.18); box-shadow:0 0 20px rgba(0,200,255,.2); }
+  .login-btn.loading  { opacity:.5; pointer-events:none; }
+  .login-btn:disabled { opacity:.3; pointer-events:none; cursor:not-allowed; }
+
+  .login-hint { text-align:center; margin-top:20px; font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:1px; line-height:1.8; }
+
+  .login-socmed { margin-top:20px; padding-top:18px; border-top:1px solid var(--border-dim); text-align:center; }
+  .socmed-label { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:1px; display:block; margin-bottom:12px; }
+  .socmed-links { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+  .socmed-btn   { display:flex; align-items:center; gap:6px; padding:7px 12px; border:1px solid; text-decoration:none; font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1px; transition:all .2s; }
+  .socmed-btn svg { width:14px; height:14px; flex-shrink:0; }
+  .socmed-btn.tg  { border-color:rgba(0,136,204,.4); color:#0088cc; }
+  .socmed-btn.tg:hover { background:rgba(0,136,204,.15); border-color:#0088cc; }
+  .socmed-btn.tt  { border-color:rgba(255,255,255,.2); color:#e8f4ff; }
+  .socmed-btn.tt:hover { background:rgba(255,255,255,.1); border-color:#e8f4ff; }
+  .socmed-btn.th  { border-color:rgba(168,85,247,.3); color:#a855f7; }
+  .socmed-btn.th:hover { background:rgba(168,85,247,.1); border-color:#a855f7; }
+
+  /* ── DASHBOARD ── */
+  #dashboard { display:none; }
+  header { position:relative; z-index:10; padding:0 28px; height:64px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border-dim); background:rgba(5,10,15,.97); backdrop-filter:blur(12px); }
+  header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent); animation:scanline 5s ease-in-out infinite; }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-hex { width:38px; height:38px; clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); background:rgba(0,200,255,.12); border:2px solid var(--accent-cyan); display:flex; align-items:center; justify-content:center; animation:hex-pulse 3s ease-in-out infinite; }
+  .logo-hex svg { width:17px; height:17px; fill:var(--accent-cyan); }
+  .logo-title { font-family:'Orbitron',sans-serif; font-size:17px; font-weight:900; color:var(--accent-cyan); letter-spacing:3px; text-shadow:0 0 18px rgba(0,200,255,.5); display:block; }
+  .logo-sub   { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:4px; text-transform:uppercase; }
+  .header-right { display:flex; align-items:center; gap:14px; }
+  .status-pill  { display:flex; align-items:center; gap:7px; padding:5px 13px; border:1px solid rgba(0,255,136,.3); background:rgba(0,255,136,.05); font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--accent-green); letter-spacing:1px; }
+  .dot { width:6px; height:6px; border-radius:50%; }
+  .dot.green { background:var(--accent-green); box-shadow:0 0 7px var(--accent-green); animation:blink 1.6s ease-in-out infinite; }
+  .dot.red   { background:var(--accent-red);   box-shadow:0 0 7px var(--accent-red); }
+  .dot.gold  { background:var(--accent-gold);  box-shadow:0 0 7px var(--accent-gold); animation:blink .8s ease-in-out infinite; }
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  .clock { font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--text-sec); letter-spacing:2px; }
+  .btn-logout { display:flex; align-items:center; gap:6px; padding:5px 12px; cursor:pointer; background:transparent; border:1px solid rgba(255,51,85,.3); color:var(--accent-red); font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px; transition:all .2s; }
+  .btn-logout:hover { background:rgba(255,51,85,.1); border-color:var(--accent-red); }
+
+  .stats-bar { position:relative; z-index:5; display:flex; border-bottom:1px solid var(--border-dim); background:rgba(8,13,20,.9); }
+  .stat { flex:1; padding:10px 18px; border-right:1px solid var(--border-dim); }
+  .stat-label { font-size:9px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; font-family:'Share Tech Mono',monospace; display:block; margin-bottom:3px; }
+  .stat-val   { font-family:'Orbitron',sans-serif; font-size:22px; font-weight:700; }
+  .c-cyan{color:var(--accent-cyan);} .c-green{color:var(--accent-green);} .c-red{color:var(--accent-red);} .c-gold{color:var(--accent-gold);}
+
+  .reset-bar { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; padding:8px 28px; border-bottom:1px solid var(--border-dim); background:rgba(8,13,20,.95); }
+  .reset-info { display:flex; align-items:center; gap:20px; font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text-dim); flex-wrap:wrap; }
+  .reset-info .val { color:var(--text-sec); }
+  .btn-reset { display:flex; align-items:center; gap:8px; padding:7px 16px; cursor:pointer; background:transparent; border:1px solid rgba(255,51,85,.4); color:var(--accent-red); font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:1px; transition:all .2s; white-space:nowrap; }
+  .btn-reset:hover { background:rgba(255,51,85,.1); border-color:var(--accent-red); }
+  .btn-reset.loading { opacity:.5; pointer-events:none; }
+
+  .main { position:relative; z-index:5; padding:24px 28px; }
+  .sec-header { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+  .sec-title  { font-family:'Orbitron',sans-serif; font-size:10px; letter-spacing:4px; color:var(--text-sec); text-transform:uppercase; }
+  .sec-line   { flex:1; height:1px; background:linear-gradient(90deg,var(--border-dim),transparent); }
+  .sec-extra  { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text-dim); }
+  .formula-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:18px; }
+
+  .fbox { background:var(--bg-card); border:1px solid var(--border-dim); position:relative; overflow:hidden; transition:border-color .3s; }
+  .fbox::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .fbox.cyan::before{background:linear-gradient(90deg,transparent,var(--accent-cyan),transparent);}
+  .fbox.green::before{background:linear-gradient(90deg,transparent,var(--accent-green),transparent);}
+  .fbox.gold::before{background:linear-gradient(90deg,transparent,var(--accent-gold),transparent);}
+  .fbox.purple::before{background:linear-gradient(90deg,transparent,var(--accent-purple),transparent);}
+  .fbox.orange::before{background:linear-gradient(90deg,transparent,var(--accent-orange),transparent);}
+  .fbox:hover{border-color:rgba(0,200,255,.2);}
+  .fbox-header{padding:12px 16px;border-bottom:1px solid var(--border-dim);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.25);}
+  .fbox-left{display:flex;align-items:center;gap:10px;}
+  .fbox-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid;font-size:14px;flex-shrink:0;}
+  .fbox.cyan   .fbox-icon{border-color:var(--accent-cyan);  background:rgba(0,200,255,.07);}
+  .fbox.green  .fbox-icon{border-color:var(--accent-green); background:rgba(0,255,136,.07);}
+  .fbox.gold   .fbox-icon{border-color:var(--accent-gold);  background:rgba(255,200,32,.07);}
+  .fbox.purple .fbox-icon{border-color:var(--accent-purple);background:rgba(168,85,247,.07);}
+  .fbox.orange .fbox-icon{border-color:var(--accent-orange);background:rgba(249,115,22,.07);}
+  .fbox-name{display:flex;flex-direction:column;gap:1px;}
+  .fbox-title{font-weight:700;font-size:13px;letter-spacing:.5px;}
+  .fbox-desc{font-size:9px;color:var(--text-dim);letter-spacing:1px;font-family:'Share Tech Mono',monospace;}
+  .fbox.cyan   .fbox-title{color:var(--accent-cyan);}
+  .fbox.green  .fbox-title{color:var(--accent-green);}
+  .fbox.gold   .fbox-title{color:var(--accent-gold);}
+  .fbox.purple .fbox-title{color:var(--accent-purple);}
+  .fbox.orange .fbox-title{color:var(--accent-orange);}
+  .fbox-count{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:700;}
+  .fbox.cyan   .fbox-count{color:var(--accent-cyan);}
+  .fbox.green  .fbox-count{color:var(--accent-green);}
+  .fbox.gold   .fbox-count{color:var(--accent-gold);}
+  .fbox.purple .fbox-count{color:var(--accent-purple);}
+  .fbox.orange .fbox-count{color:var(--accent-orange);}
+  .stock-list{padding:10px;display:flex;flex-direction:column;gap:6px;min-height:72px;max-height:300px;overflow-y:auto;}
+  .stock-list::-webkit-scrollbar{width:3px;}
+  .stock-list::-webkit-scrollbar-thumb{background:var(--border-dim);}
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:18px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;text-align:center;}
+  .scard{background:rgba(0,0,0,.3);border:1px solid var(--border-dim);padding:8px 12px;display:flex;align-items:center;gap:10px;animation:slideIn .35s cubic-bezier(.22,1,.36,1);transition:all .2s;cursor:default;}
+  .scard:hover{background:var(--bg-card-h);border-color:rgba(0,200,255,.15);}
+  @keyframes slideIn{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
+  .scard.removing{animation:slideOut .35s forwards;}
+  @keyframes slideOut{from{opacity:1;transform:translateX(0);max-height:60px;margin-bottom:6px}to{opacity:0;transform:translateX(20px);max-height:0;margin-bottom:0;padding:0}}
+  .scard-ticker{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--text-pri);min-width:58px;letter-spacing:1px;}
+  .scard-price{flex:1;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent-cyan);}
+  .scard-price .lbl{font-size:9px;color:var(--text-dim);margin-right:3px;}
+  .scard-time{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);}
+  .log-section{margin-top:24px;}
+  .log-box{background:var(--bg-card);border:1px solid var(--border-dim);overflow:hidden;}
+  .log-header{padding:10px 16px;border-bottom:1px solid var(--border-dim);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.2);}
+  .log-title{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:var(--text-sec);}
+  .log-feed{padding:8px;max-height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
+  .log-feed::-webkit-scrollbar{width:3px;}
+  .log-feed::-webkit-scrollbar-thumb{background:var(--border-dim);}
+  .log-entry{display:flex;gap:10px;align-items:flex-start;padding:4px 8px;font-family:'Share Tech Mono',monospace;font-size:10px;animation:fadeIn .3s ease;}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .log-dot{width:5px;height:5px;border-radius:50%;margin-top:3px;flex-shrink:0;}
+  .log-dot.in{background:var(--accent-green);} .log-dot.out{background:var(--accent-red);} .log-dot.sys{background:var(--accent-cyan);} .log-dot.rst{background:var(--accent-gold);}
+  .log-time{color:var(--text-dim);min-width:52px;}
+  .log-msg{color:var(--text-sec);}
+  .log-msg .tk{color:var(--accent-cyan);font-weight:bold;} .log-msg .fn{color:var(--accent-gold);} .log-msg .act-in{color:var(--accent-green);} .log-msg .act-out{color:var(--accent-red);} .log-msg .act-rst{color:var(--accent-gold);} .log-msg .px{color:var(--accent-cyan);}
+  .conn-bar{position:fixed;bottom:18px;right:22px;z-index:100;display:flex;align-items:center;gap:9px;padding:7px 15px;background:rgba(8,13,20,.97);border:1px solid var(--border-dim);backdrop-filter:blur(10px);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--text-sec);}
+
+  /* ── MODAL ── */
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--bg-card);border:1px solid var(--border-dim);padding:28px 32px;width:360px;position:relative;animation:modalIn .25s cubic-bezier(.22,1,.36,1);}
+  @keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+  .modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent-red),transparent);}
+  .modal-icon{font-size:32px;text-align:center;margin-bottom:10px;}
+  .modal-title{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--accent-red);letter-spacing:2px;margin-bottom:8px;text-align:center;}
+  .modal-msg{font-size:13px;color:var(--text-sec);margin-bottom:18px;line-height:1.6;text-align:center;}
+  .pw-wrap{position:relative;margin-bottom:6px;}
+  .pw-input{width:100%;padding:10px 44px 10px 14px;background:rgba(0,0,0,.4);border:1px solid var(--border-dim);color:var(--text-pri);font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:2px;outline:none;transition:border-color .2s;}
+  .pw-input:focus{border-color:var(--accent-cyan);}
+  .pw-input.error{border-color:var(--accent-red);animation:shake .3s ease;}
+  .pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text-dim);font-size:14px;background:none;border:none;padding:0;}
+  .pw-toggle:hover{color:var(--text-sec);}
+  .pw-error{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent-red);letter-spacing:1px;margin-bottom:10px;display:none;min-height:14px;}
+  .pw-error.show{display:block;}
+  .modal-btns{display:flex;gap:10px;justify-content:center;}
+  .modal-btn{padding:8px 24px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;border:1px solid;background:transparent;transition:all .2s;}
+  .modal-btn.confirm{border-color:var(--accent-red);color:var(--accent-red);}
+  .modal-btn.confirm:hover{background:rgba(255,51,85,.15);}
+  .modal-btn.cancel{border-color:var(--border-dim);color:var(--text-sec);}
+  .modal-btn.cancel:hover{border-color:var(--text-sec);}
+
+  /* toast */
+  .toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) translateY(20px);z-index:400;padding:10px 22px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;border:1px solid;opacity:0;transition:all .3s;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.success{background:rgba(0,255,136,.1);border-color:var(--accent-green);color:var(--accent-green);}
+  .toast.error{background:rgba(255,51,85,.1);border-color:var(--accent-red);color:var(--accent-red);}
+
+  @media(max-width:700px){.main{padding:14px;}header{padding:0 14px;}.reset-bar{padding:8px 14px;flex-wrap:wrap;gap:8px;}.login-box{width:92%;padding:28px 20px;}}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-hex"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm14 3a4 4 0 100-8 4 4 0 000 8z"/></svg></div>
+      <span class="login-title">Tradinginaja Alert Saham</span>
+      <span class="login-sub">Stock Screening Monitor</span>
+    </div>
+
+    <label class="login-label">Password Akses</label>
+    <div class="input-wrap">
+      <input class="login-input" type="password" id="login-pw"
+        placeholder="Masukkan password..."
+        onkeydown="if(event.key==='Enter')doLogin()"
+        oninput="clearLoginError()">
+      <button class="eye-btn" onclick="toggleLoginPw()">👁</button>
+    </div>
+
+    <div class="login-error-box">
+      <span class="login-error" id="login-error"></span>
+    </div>
+
+    <!-- Countdown kunci -->
+    <div class="lockout-timer" id="lockout-box">
+      <div class="lockout-title">🔒 AKSES DIKUNCI — COBA LAGI DALAM</div>
+      <div class="lockout-count" id="lockout-count">15:00</div>
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="doLogin()">MASUK</button>
+    <div class="login-hint">Tradinginaja Alert Saham Dashboard<br>Hanya untuk member yang berwenang</div>
+
+    <div class="login-socmed">
+      <span class="socmed-label">Ingin jadi member? Hubungi kami:</span>
+      <div class="socmed-links">
+        <a href="https://t.me/tradinginajabos" target="_blank" class="socmed-btn tg">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.48 14.717l-2.95-.924c-.64-.204-.654-.64.136-.948l11.527-4.448c.537-.194 1.006.131.369.851z"/></svg>
+          Telegram
+        </a>
+        <a href="https://tiktok.com/@tradinginaja_" target="_blank" class="socmed-btn tt">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.75a8.26 8.26 0 004.84 1.55V6.85a4.85 4.85 0 01-1.07-.16z"/></svg>
+          TikTok
+        </a>
+        <a href="https://threads.net/@tradinginaja_" target="_blank" class="socmed-btn th">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 012.322.157v-.36c0-.886-.347-1.977-2.147-1.951-.923.014-1.747.315-2.423.888l-1.322-1.564C9.633 8.04 11.029 7.5 12.63 7.475h.037c3.09 0 4.494 1.68 4.494 4.317v4.343c0 .386.017.765.05 1.125h-2.038a8.76 8.76 0 01-.037-.97v-.058c-.633.943-1.913 1.555-3.544 1.555h-.1c-1.816 0-3.573-.907-3.573-3.092 0-2.184 1.757-3.09 3.573-3.09h.1c1.24 0 2.275.38 2.944.997v-.61c0-1.287-.735-2.127-2.3-2.127-.904 0-1.764.348-2.438.977L8.455 9.28c1.04-.936 2.43-1.454 3.9-1.454 3.327 0 4.492 1.95 4.492 4.287v4.14c0 .378.017.75.05 1.097H14.86c-.025-.328-.037-.666-.037-1.006v-.035c-.627.904-1.777 1.45-3.282 1.45h-.1c-1.775 0-3.497-.883-3.497-3.013 0-2.13 1.722-3.013 3.497-3.013h.1c1.178 0 2.15.357 2.77.937v-.485c0-1.17-.657-1.934-2.092-1.934-.83 0-1.617.318-2.233.896l-1.316-1.553c.997-.9 2.32-1.396 3.724-1.396 2.853 0 4.215 1.6 4.215 3.987v3.97c0 .378.017.75.05 1.097z"/></svg>
+          Threads
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div id="dashboard">
+  <header>
+    <div class="logo">
+      <div class="logo-hex"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm14 3a4 4 0 100-8 4 4 0 000 8z"/></svg></div>
+      <div><span class="logo-title">Tradinginaja</span><span class="logo-sub">Alert Saham Dashboard</span></div>
+    </div>
+    <div class="header-right">
+      <div class="status-pill"><span class="dot green"></span><span>TELEGRAM LIVE</span></div>
+      <div class="clock" id="clock">--:--:--</div>
+      <button class="btn-logout" onclick="doLogout()">🚪 LOGOUT</button>
+    </div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat"><span class="stat-label">Total Saham Aktif</span><span class="stat-val c-cyan"  id="s-total">0</span></div>
+    <div class="stat"><span class="stat-label">Masuk Hari Ini</span>  <span class="stat-val c-green" id="s-in">0</span></div>
+    <div class="stat"><span class="stat-label">Keluar Hari Ini</span> <span class="stat-val c-red"   id="s-out">0</span></div>
+    <div class="stat"><span class="stat-label">Formula Aktif</span>   <span class="stat-val c-gold"  id="s-form">0</span></div>
+  </div>
+
+  <div class="reset-bar">
+    <div class="reset-info">
+      <span>🕐 SERVER: <span class="val" id="server-time">--</span></span>
+      <span>🔄 AUTO RESET: <span class="val" id="next-reset">06:00 WIB</span></span>
+      <span>📋 RESET TERAKHIR: <span class="val" id="last-reset">Belum pernah</span></span>
+    </div>
+    <button class="btn-reset" id="btn-reset" onclick="openResetModal()">🗑 RESET MANUAL</button>
+  </div>
+
+  <div class="main">
+    <div class="sec-header">
+      <span class="sec-title">Screening Monitor</span>
+      <div class="sec-line"></div>
+      <span class="sec-extra" id="last-upd">LAST UPDATE: --</span>
+    </div>
+    <div class="formula-grid" id="grid"></div>
+    <div class="log-section">
+      <div class="sec-header"><span class="sec-title">Activity Log</span><div class="sec-line"></div></div>
+      <div class="log-box">
+        <div class="log-header">
+          <span class="log-title">TELEGRAM FEED</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)" id="log-cnt">0 ENTRIES</span>
+        </div>
+        <div class="log-feed" id="log-feed"></div>
+      </div>
+    </div>
+  </div>
+  <div class="conn-bar"><div class="dot gold" id="conn-dot"></div><span id="conn-txt">CONNECTING...</span></div>
+</div>
+
+<!-- MODAL RESET -->
+<div class="modal-overlay" id="modal-reset">
+  <div class="modal">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-title">RESET MANUAL</div>
+    <div class="modal-msg">Masukkan password admin untuk konfirmasi.<br>Semua data saham aktif akan dihapus.</div>
+    <div class="pw-wrap">
+      <input class="pw-input" type="password" id="reset-pw"
+        placeholder="Password reset..."
+        onkeydown="if(event.key==='Enter')submitReset()"
+        oninput="clearResetError()">
+      <button class="pw-toggle" onclick="toggleResetPw()">👁</button>
+    </div>
+    <div class="pw-error" id="reset-pw-error"></div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeResetModal()">BATAL</button>
+      <button class="modal-btn confirm" onclick="submitReset()">RESET</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CONFIG = {
+  backendUrl:   'https://dsi-alert-backend-production.up.railway.app',
+  pollInterval: 10000,
+};
+
+const FORMULAS = [
+  { id:'serok_gila',       name:'Serok Gila',                desc:'AKUMULASI BESAR',   icon:'🦈', color:'cyan'   },
+  { id:'breakout',         name:'Breakout',                  desc:'RESISTANCE BREAK',  icon:'🚀', color:'green'  },
+  { id:'open_low',         name:'Open == Low',               desc:'BULLISH SIGNAL',    icon:'📈', color:'gold'   },
+  { id:'bid_offer_sepi',   name:'Bid Offer Sepi',            desc:'LOW SUPPLY',        icon:'🔇', color:'purple' },
+  { id:'ritel_out_bandar', name:'Ritel Out Bandar Nyangkut', desc:'BANDAR TRAPPED',    icon:'🏦', color:'orange' },
+];
+
+// ── STATE ──
+const state = { formulas:{}, statsIn:0, statsOut:0 };
+FORMULAS.forEach(f => state.formulas[f.id] = { stocks:{} });
+let logCount  = 0;
+let pollTimer = null;
+let sessionToken  = null;   // Token aktif
+let savedPassword = null;   // Simpan password untuk auto-relogin saat server restart
+let lockoutTimer  = null;
+
+// ════════════════════════════════════════
+// LOGIN
+// ════════════════════════════════════════
+function toggleLoginPw() {
+  const i = document.getElementById('login-pw');
+  i.type = i.type==='password' ? 'text' : 'password';
+}
+function clearLoginError() {
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('login-pw').classList.remove('error');
+}
+
+async function doLogin() {
+  const pw  = document.getElementById('login-pw').value.trim();
+  const btn = document.getElementById('login-btn');
+  if (!pw) { showLoginError('Password tidak boleh kosong'); return; }
+
+  btn.classList.add('loading');
+  btn.textContent = 'MEMVERIFIKASI...';
+
+  try {
+    const res  = await fetch(`${CONFIG.backendUrl}/api/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw }),
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      // Simpan token di memori (bukan localStorage — lebih aman)
+      sessionToken  = data.token;
+      savedPassword = pw;
+      sessionStorage.setItem('dsi_token', data.token);
+      sessionStorage.setItem('dsi_pw', pw);
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      initDashboard();
+
+    } else if (res.status === 429 && data.locked) {
+      // IP dikunci — tampilkan countdown
+      showLockout(data.error);
+    } else {
+      showLoginError(data.error || 'Password salah');
+    }
+  } catch(e) {
+    showLoginError('❌ Tidak bisa terhubung ke server');
+  }
+
+  btn.classList.remove('loading');
+  btn.textContent = 'MASUK';
+}
+
+function showLoginError(msg) {
+  document.getElementById('login-error').textContent = msg;
+  const i = document.getElementById('login-pw');
+  i.classList.add('error'); i.select();
+}
+
+function showLockout(msg) {
+  // Tampilkan box countdown
+  document.getElementById('login-error').textContent = msg;
+  document.getElementById('lockout-box').classList.add('show');
+  document.getElementById('login-btn').disabled = true;
+  document.getElementById('login-pw').disabled  = true;
+
+  // Parse menit dari pesan (contoh: "...dalam 15 menit")
+  const match = msg.match(/(\d+)\s*menit/);
+  let secsLeft = match ? parseInt(match[1]) * 60 : 15 * 60;
+
+  lockoutTimer = setInterval(() => {
+    secsLeft--;
+    const m = String(Math.floor(secsLeft/60)).padStart(2,'0');
+    const s = String(secsLeft%60).padStart(2,'0');
+    document.getElementById('lockout-count').textContent = `${m}:${s}`;
+    if (secsLeft <= 0) {
+      clearInterval(lockoutTimer);
+      document.getElementById('lockout-box').classList.remove('show');
+      document.getElementById('login-btn').disabled = false;
+      document.getElementById('login-pw').disabled  = false;
+      document.getElementById('login-error').textContent = '';
+      document.getElementById('lockout-count').textContent = '15:00';
+    }
+  }, 1000);
+}
+
+async function doLogout() {
+  // Beritahu server untuk invalidate token
+  if (sessionToken) {
+    try {
+      await fetch(`${CONFIG.backendUrl}/api/logout`, {
+        method:'POST',
+        headers:{'Authorization':`Bearer ${sessionToken}`},
+      });
+    } catch(e) {}
+  }
+  sessionToken = null;
+  sessionStorage.removeItem('dsi_token');
+  sessionStorage.removeItem('dsi_pw');
+  clearInterval(pollTimer);
+  FORMULAS.forEach(f => state.formulas[f.id] = { stocks:{} });
+  state.statsIn=0; state.statsOut=0; logCount=0;
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pw').value = '';
+  clearLoginError();
+}
+
+
+// ════════════════════════════════════════
+// AUTO RELOGIN (saat server Railway restart)
+// ════════════════════════════════════════
+async function silentRelogin() {
+  if (!savedPassword) { doLogout(); return; }
+  try {
+    const res  = await fetch(`${CONFIG.backendUrl}/api/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ password: savedPassword }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      sessionToken = data.token;
+      sessionStorage.setItem('dsi_token', data.token);
+      // Lanjut polling normal — user tidak sadar ada relogin
+    } else {
+      // Password sudah tidak valid → paksa logout
+      doLogout();
+    }
+  } catch(e) {
+    setConn('disconnected','DISCONNECTED');
+  }
+}
+
+// ════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════
+function initDashboard() {
+  buildGrid();
+  setConn('connecting','CONNECTING...');
+  poll();
+  pollTimer = setInterval(poll, CONFIG.pollInterval);
+}
+
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  FORMULAS.forEach(f => {
+    const box = document.createElement('div');
+    box.className = `fbox ${f.color}`; box.id = `box-${f.id}`;
+    box.innerHTML = `
+      <div class="fbox-header">
+        <div class="fbox-left">
+          <div class="fbox-icon">${f.icon}</div>
+          <div class="fbox-name"><span class="fbox-title">${f.name}</span><span class="fbox-desc">${f.desc}</span></div>
+        </div>
+        <span class="fbox-count" id="cnt-${f.id}">0</span>
+      </div>
+      <div class="stock-list" id="list-${f.id}">${emptyHTML()}</div>`;
+    grid.appendChild(box);
+  });
+}
+
+function emptyHTML() { return `<div class="empty"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M9 12h6M12 9v6"/></svg><span>MENUNGGU SINYAL</span></div>`; }
+function cardHTML(s) { return `<div class="scard" id="card-${s.formula}-${s.ticker}"><span class="scard-ticker">${s.ticker}</span><span class="scard-price"><span class="lbl">Rp</span>${s.price||'-'}</span><span class="scard-time">${s.time||'--:--'}</span></div>`; }
+
+function addStock(fid, stock) {
+  if (!state.formulas[fid]) return;
+  state.formulas[fid].stocks[stock.ticker] = stock;
+  state.statsIn++;
+  const list=document.getElementById(`list-${fid}`), cntEl=document.getElementById(`cnt-${fid}`);
+  if (!list) return;
+  list.querySelector('.empty')?.remove();
+  const div=document.createElement('div'); div.innerHTML=cardHTML(stock); list.appendChild(div.firstElementChild);
+  cntEl.textContent=Object.keys(state.formulas[fid].stocks).length;
+  updateStats(); addLog('in',stock.ticker,fid,stock.price,stock.time);
+}
+
+function removeStock(fid, ticker) {
+  let tid=null;
+  if (fid&&state.formulas[fid]?.stocks[ticker]){tid=fid;}
+  else{for(const[id,fd]of Object.entries(state.formulas)){if(fd.stocks[ticker]){tid=id;break;}}}
+  if(!tid)return;
+  delete state.formulas[tid].stocks[ticker]; state.statsOut++;
+  const card=document.getElementById(`card-${tid}-${ticker}`), cntEl=document.getElementById(`cnt-${tid}`);
+  if(card){card.classList.add('removing');setTimeout(()=>{card.remove();const l=document.getElementById(`list-${tid}`);if(l&&!Object.keys(state.formulas[tid].stocks).length)l.innerHTML=emptyHTML();},380);}
+  cntEl&&(cntEl.textContent=Object.keys(state.formulas[tid].stocks).length);
+  updateStats(); addLog('out',ticker,tid,null,nowStr());
+}
+
+function clearAll() {
+  FORMULAS.forEach(f=>{state.formulas[f.id].stocks={};const l=document.getElementById(`list-${f.id}`),c=document.getElementById(`cnt-${f.id}`);if(l)l.innerHTML=emptyHTML();if(c)c.textContent='0';});
+  state.statsIn=0;state.statsOut=0;
+  document.getElementById('log-feed').innerHTML=''; logCount=0;
+  document.getElementById('log-cnt').textContent='0 ENTRIES';
+  updateStats(); addLog('rst',null,null,null,nowStr());
+}
+
+// ════════════════════════════════════════
+// POLLING — kirim token di setiap request
+// ════════════════════════════════════════
+async function poll() {
+  if (!sessionToken) return;
+  try {
+    const res = await fetch(`${CONFIG.backendUrl}/api/stocks`, {
+      headers: { 'Authorization': `Bearer ${sessionToken}` }
+    });
+    // Jika 401 → server restart, coba auto-relogin diam-diam
+    if (res.status === 401) { await silentRelogin(); return; }
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    if(data.server_time) document.getElementById('server-time').textContent=data.server_time;
+    if(data.next_reset)  document.getElementById('next-reset').textContent=data.next_reset;
+    if(data.reset_logs?.length) document.getElementById('last-reset').textContent=data.reset_logs[0].time;
+    Object.entries(data.formulas||{}).forEach(([fid,fd])=>{
+      Object.entries(fd.stocks||{}).forEach(([t,s])=>{if(!state.formulas[fid]?.stocks[t])addStock(fid,s);});
+      Object.keys(state.formulas[fid]?.stocks||{}).forEach(t=>{if(!fd.stocks?.[t])removeStock(fid,t);});
+    });
+    setConn('connected','CONNECTED');
+    document.getElementById('last-upd').textContent=`LAST UPDATE: ${nowStr()}`;
+  } catch(e) { setConn('disconnected','DISCONNECTED'); }
+}
+
+// ════════════════════════════════════════
+// RESET MODAL
+// ════════════════════════════════════════
+function openResetModal(){document.getElementById('reset-pw').value='';clearResetError();document.getElementById('modal-reset').classList.add('show');setTimeout(()=>document.getElementById('reset-pw').focus(),100);}
+function closeResetModal(){document.getElementById('modal-reset').classList.remove('show');}
+function toggleResetPw(){const i=document.getElementById('reset-pw');i.type=i.type==='password'?'text':'password';}
+function clearResetError(){document.getElementById('reset-pw-error').classList.remove('show');document.getElementById('reset-pw').classList.remove('error');}
+
+async function submitReset() {
+  const pw=document.getElementById('reset-pw').value.trim();
+  if(!pw){showResetError('❌ Password tidak boleh kosong');return;}
+  const btn=document.getElementById('btn-reset'); btn.classList.add('loading');
+  try {
+    const res=await fetch(`${CONFIG.backendUrl}/api/reset`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${sessionToken}`},
+      body:JSON.stringify({password:pw}),
+    });
+    const data=await res.json();
+    if(data.ok){closeResetModal();clearAll();document.getElementById('last-reset').textContent=data.time||nowStr();showToast('✅ Semua data berhasil direset!','success');}
+    else if(res.status===403){showResetError('❌ Password reset salah. Coba lagi.');}
+    else if(res.status===401){ await silentRelogin(); }
+    else{showResetError('❌ Terjadi kesalahan.');}
+  } catch(e){showResetError('❌ Tidak bisa terhubung ke server.');}
+  btn.classList.remove('loading');
+}
+
+function showResetError(msg){const el=document.getElementById('reset-pw-error');el.textContent=msg;el.classList.add('show');const i=document.getElementById('reset-pw');i.classList.add('error');i.select();}
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+function updateStats(){const total=Object.values(state.formulas).reduce((s,f)=>s+Object.keys(f.stocks).length,0);const active=FORMULAS.filter(f=>Object.keys(state.formulas[f.id]?.stocks||{}).length>0).length;document.getElementById('s-total').textContent=total;document.getElementById('s-in').textContent=state.statsIn;document.getElementById('s-out').textContent=state.statsOut;document.getElementById('s-form').textContent=active;}
+
+function addLog(type,ticker,fid,price,time){const fname=FORMULAS.find(f=>f.id===fid)?.name||fid;const feed=document.getElementById('log-feed');if(!feed)return;const el=document.createElement('div');el.className='log-entry';let msg='';if(type==='rst'){msg=`<span class="act-rst">⚡ RESET MANUAL — semua data dikosongkan</span>`;}else{const act=type==='in'?`<span class="act-in">MASUK</span>`:`<span class="act-out">KELUAR</span>`;const px=price?`<span class="px"> @ Rp${price}</span>`:'';msg=`<span class="tk">${ticker}</span>${px} ${act} · <span class="fn">${fname||''}</span>`;}el.innerHTML=`<span class="log-dot ${type}"></span><span class="log-time">${time||nowStr()}</span><span class="log-msg">${msg}</span>`;feed.insertBefore(el,feed.firstChild);logCount++;document.getElementById('log-cnt').textContent=`${logCount} ENTRIES`;}
+
+function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),3000);}
+function setConn(s,t){document.getElementById('conn-dot').className=`dot ${s==='connected'?'green':s==='disconnected'?'red':'gold'}`;document.getElementById('conn-txt').textContent=t;}
+function nowStr(){return new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+
+document.getElementById('modal-reset').addEventListener('click',function(e){if(e.target===this)closeResetModal();});
+
+// ── AUTO RESTORE SESI SETELAH REFRESH ──
+(async function restoreSession() {
+  const savedToken = sessionStorage.getItem('dsi_token');
+  const savedPw    = sessionStorage.getItem('dsi_pw');
+  if (!savedToken || !savedPw) return; // Tidak ada sesi tersimpan
+
+  // Coba validasi token yang tersimpan
+  try {
+    const res = await fetch(`${CONFIG.backendUrl}/api/stocks`, {
+      headers: { 'Authorization': `Bearer ${savedToken}` }
+    });
+    if (res.ok) {
+      // Token masih valid — langsung masuk dashboard
+      sessionToken  = savedToken;
+      savedPassword = savedPw;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display    = 'block';
+      initDashboard();
+    } else {
+      // Token expired — coba login ulang dengan password tersimpan
+      const res2 = await fetch(`${CONFIG.backendUrl}/api/login`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ password: savedPw }),
+      });
+      const data = await res2.json();
+      if (data.ok) {
+        sessionToken  = data.token;
+        savedPassword = savedPw;
+        sessionStorage.setItem('dsi_token', data.token);
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display    = 'block';
+        initDashboard();
+      } else {
+        // Password sudah diganti admin — hapus sesi lama
+        sessionStorage.removeItem('dsi_token');
+        sessionStorage.removeItem('dsi_pw');
+      }
+    }
+  } catch(e) {
+    // Server tidak bisa dihubungi — biarkan di halaman login
+    sessionStorage.removeItem('dsi_token');
+    sessionStorage.removeItem('dsi_pw');
+  }
+})();
+setInterval(()=>{const c=document.getElementById('clock');if(c)c.textContent=nowStr();},1000);
+window.addEventListener('DOMContentLoaded',()=>document.getElementById('login-pw').focus());
+</script>
+</body>
+</html>
