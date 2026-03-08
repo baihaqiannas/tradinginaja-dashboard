@@ -17,6 +17,7 @@
     --accent-gold:  #ffc820;
     --accent-purple:#a855f7;
     --accent-orange:#f97316;
+    --accent-teal:  #2dd4bf;
     --text-pri:     #e8f4ff;
     --text-sec:     #7a9ab5;
     --text-dim:     #3a5a72;
@@ -124,6 +125,10 @@
   .fbox.gold::before{background:linear-gradient(90deg,transparent,var(--accent-gold),transparent);}
   .fbox.purple::before{background:linear-gradient(90deg,transparent,var(--accent-purple),transparent);}
   .fbox.orange::before{background:linear-gradient(90deg,transparent,var(--accent-orange),transparent);}
+  .fbox.teal::before{background:linear-gradient(90deg,transparent,var(--accent-teal),transparent);}
+  .fbox.teal  .fbox-icon{border-color:var(--accent-teal);  background:rgba(45,212,191,.07);}
+  .fbox.teal  .fbox-title{color:var(--accent-teal);}
+  .fbox.teal  .fbox-count{color:var(--accent-teal);}
   .fbox:hover{border-color:rgba(0,200,255,.2);}
   .fbox-header{padding:12px 16px;border-bottom:1px solid var(--border-dim);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.25);}
   .fbox-left{display:flex;align-items:center;gap:10px;}
@@ -160,6 +165,9 @@
   .scard-price{flex:1;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent-cyan);}
   .scard-price .lbl{font-size:9px;color:var(--text-dim);margin-right:3px;}
   .scard-time{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);}
+  .scard-badge{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;padding:2px 6px;border:1px solid;border-radius:0;white-space:nowrap;}
+  .badge-marubozu{color:#f97316;border-color:rgba(249,115,22,.4);background:rgba(249,115,22,.08);}
+  .badge-hammer  {color:#a855f7;border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.08);}
   .log-section{margin-top:24px;}
   .log-box{background:var(--bg-card);border:1px solid var(--border-dim);overflow:hidden;}
   .log-header{padding:10px 16px;border-bottom:1px solid var(--border-dim);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.2);}
@@ -452,6 +460,42 @@
         </div>
       </div>
 
+
+      <div class="alert-card">
+        <div class="alert-card-header">
+          <span class="alert-card-icon">🌙</span>
+          <span class="alert-card-name" style="color:#2dd4bf;">BSJP — Beli Sore Jual Pagi</span>
+          <span class="alert-card-risk risk-low">OVERNIGHT</span>
+        </div>
+        <div class="alert-card-body">
+          <div class="alert-logika">Kotak ini menggabungkan 2 pola candle yang sama-sama cocok untuk strategi <strong>Beli Sore Jual Pagi</strong>. Alert masuk menjelang penutupan pasar sebagai kandidat hold overnight.</div>
+
+          <!-- Marubozu -->
+          <div style="background:rgba(249,115,22,.05);border:1px solid rgba(249,115,22,.2);padding:10px 12px;margin-top:4px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-family:'Share Tech Mono',monospace;font-size:9px;padding:2px 7px;border:1px solid rgba(249,115,22,.4);color:#f97316;background:rgba(249,115,22,.08);">MARUBOZU</span>
+              <span style="font-family:'Orbitron',sans-serif;font-size:10px;color:#f97316;letter-spacing:1px;">BSJP Marubozu</span>
+            </div>
+            <div class="alert-logika">Candle dengan body penuh tanpa shadow (atau shadow sangat kecil), menandakan <strong>dominasi penuh</strong> salah satu pihak — buyer atau seller — sepanjang sesi. Marubozu bullish menunjukkan tekanan beli yang kuat dari open hingga close tanpa perlawanan berarti.</div>
+          </div>
+
+          <!-- Hammer -->
+          <div style="background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.2);padding:10px 12px;margin-top:6px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-family:'Share Tech Mono',monospace;font-size:9px;padding:2px 7px;border:1px solid rgba(168,85,247,.4);color:#a855f7;background:rgba(168,85,247,.08);">SHADOW</span>
+              <span style="font-family:'Orbitron',sans-serif;font-size:10px;color:#a855f7;letter-spacing:1px;">BSJP Shadow</span>
+            </div>
+            <div class="alert-logika">Candle dengan shadow bawah panjang dan body kecil di atas, menandakan harga sempat <strong>ditekan ke bawah namun berhasil ditolak</strong> dan kembali naik. Ini sinyal bahwa buyer mulai mengambil kendali dan potensi pembalikan arah ke atas.</div>
+          </div>
+
+          <div class="alert-tags" style="margin-top:6px;">
+            <span class="alert-tag time">⏰ Menjelang penutupan pasar</span>
+            <span class="alert-tag time">🌙 Hold overnight / BSJP</span>
+            <span class="alert-tag warn">⚠️ Konfirmasi dengan volume & kondisi IHSG</span>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div style="text-align:center;margin-top:18px;">
@@ -518,11 +562,13 @@ const FORMULAS = [
   { id:'open_low',         name:'Open == Low',               desc:'BULLISH SIGNAL',    icon:'📈', color:'gold'   },
   { id:'bid_offer_sepi',   name:'Bid Offer Sepi',            desc:'LOW SUPPLY',        icon:'🔇', color:'purple' },
   { id:'ritel_out_bandar', name:'Ritel Out Bandar Nyangkut', desc:'BANDAR TRAPPED',    icon:'🏦', color:'orange' },
+  { id:'bsjp',             name:'BSJP',                        desc:'BELI SORE JUAL PAGI', icon:'🌙', color:'teal',   combined:['bsjp_marubozu','bsjp_hammer'] },
 ];
 
 // ── STATE ──
 const state = { formulas:{}, statsIn:0, statsOut:0 };
 FORMULAS.forEach(f => state.formulas[f.id] = { stocks:{} });
+state.formulas['bsjp'] = { stocks:{} };
 let logCount  = 0;
 let pollTimer = null;
 let sessionToken  = null;   // Token aktif
@@ -628,6 +674,7 @@ async function doLogout() {
   sessionStorage.removeItem('dsi_pw');
   clearInterval(pollTimer);
   FORMULAS.forEach(f => state.formulas[f.id] = { stocks:{} });
+state.formulas['bsjp'] = { stocks:{} };
   state.statsIn=0; state.statsOut=0; logCount=0;
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
@@ -690,9 +737,20 @@ function buildGrid() {
 }
 
 function emptyHTML() { return `<div class="empty"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M9 12h6M12 9v6"/></svg><span>MENUNGGU SINYAL</span></div>`; }
-function cardHTML(s) { return `<div class="scard" id="card-${s.formula}-${s.ticker}"><span class="scard-ticker">${s.ticker}</span><span class="scard-price"><span class="lbl">Rp</span>${s.price||'-'}</span><span class="scard-time">${s.time||'--:--'}</span></div>`; }
+function cardHTML(s) {
+  const badge = s.subtype === 'marubozu' ? '<span class="scard-badge badge-marubozu">MARUBOZU</span>'
+              : s.subtype === 'hammer'   ? '<span class="scard-badge badge-hammer">SHADOW</span>'
+              : '';
+  return `<div class="scard" id="card-${s.formula}-${s.ticker}"><span class="scard-ticker">${s.ticker}</span><span class="scard-price"><span class="lbl">Rp</span>${s.price||'-'}</span>${badge}<span class="scard-time">${s.time||'--:--'}</span></div>`;
+}
 
 function addStock(fid, stock) {
+  // Gabungkan bsjp_marubozu dan bsjp_hammer ke kotak BSJP
+  const bsjpIds = ['bsjp_marubozu', 'bsjp_hammer'];
+  if (bsjpIds.includes(fid)) {
+    stock.subtype = fid === 'bsjp_marubozu' ? 'marubozu' : 'hammer';
+    fid = 'bsjp';
+  }
   if (!state.formulas[fid]) return;
   state.formulas[fid].stocks[stock.ticker] = stock;
   state.statsIn++;
@@ -705,6 +763,8 @@ function addStock(fid, stock) {
 }
 
 function removeStock(fid, ticker) {
+  // Remap bsjp sub-formulas ke kotak BSJP
+  if (fid === 'bsjp_marubozu' || fid === 'bsjp_hammer') fid = 'bsjp';
   let tid=null;
   if (fid&&state.formulas[fid]?.stocks[ticker]){tid=fid;}
   else{for(const[id,fd]of Object.entries(state.formulas)){if(fd.stocks[ticker]){tid=id;break;}}}
@@ -740,10 +800,18 @@ async function poll() {
     if(data.server_time) document.getElementById('server-time').textContent=data.server_time;
     if(data.next_reset)  document.getElementById('next-reset').textContent=data.next_reset;
     if(data.reset_logs?.length) document.getElementById('last-reset').textContent=data.reset_logs[0].time;
+    // Gabungkan data bsjp_marubozu + bsjp_hammer ke state bsjp
+    const bsjpServerStocks = {};
     Object.entries(data.formulas||{}).forEach(([fid,fd])=>{
-      Object.entries(fd.stocks||{}).forEach(([t,s])=>{if(!state.formulas[fid]?.stocks[t])addStock(fid,s);});
-      Object.keys(state.formulas[fid]?.stocks||{}).forEach(t=>{if(!fd.stocks?.[t])removeStock(fid,t);});
+      if (fid === 'bsjp_marubozu' || fid === 'bsjp_hammer') {
+        Object.entries(fd.stocks||{}).forEach(([t,s])=>{ s.subtype = fid==='bsjp_marubozu'?'marubozu':'hammer'; bsjpServerStocks[t]=s; if(!state.formulas['bsjp']?.stocks[t]) addStock(fid,s); });
+      } else {
+        Object.entries(fd.stocks||{}).forEach(([t,s])=>{if(!state.formulas[fid]?.stocks[t])addStock(fid,s);});
+        Object.keys(state.formulas[fid]?.stocks||{}).forEach(t=>{if(!fd.stocks?.[t])removeStock(fid,t);});
+      }
     });
+    // Cek removal untuk bsjp
+    Object.keys(state.formulas['bsjp']?.stocks||{}).forEach(t=>{ if(!bsjpServerStocks[t]) removeStock('bsjp',t); });
     setConn('connected','CONNECTED');
     document.getElementById('last-upd').textContent=`LAST UPDATE: ${nowStr()}`;
   } catch(e) { setConn('disconnected','DISCONNECTED'); }
