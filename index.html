@@ -172,6 +172,18 @@
   .log-box{background:var(--bg-card);border:1px solid var(--border-dim);overflow:hidden;}
   .log-header{padding:10px 16px;border-bottom:1px solid var(--border-dim);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.2);}
   .log-title{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:var(--text-sec);}
+  .log-search-wrap{padding:8px 10px;border-bottom:1px solid var(--border-dim);background:rgba(0,0,0,.15);display:flex;align-items:center;gap:8px;}
+  .log-search-icon{font-size:12px;color:var(--text-dim);flex-shrink:0;}
+  .log-search{flex:1;background:transparent;border:none;outline:none;color:var(--text-pri);font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;}
+  .log-search::placeholder{color:var(--text-dim);}
+  .log-search-clear{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:0;display:none;line-height:1;}
+  .log-search-clear.show{display:block;}
+  .log-filter-btns{display:flex;gap:4px;padding:6px 10px;border-bottom:1px solid var(--border-dim);background:rgba(0,0,0,.1);}
+  .log-fbtn{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:3px 9px;border:1px solid var(--border-dim);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s;}
+  .log-fbtn:hover{border-color:var(--text-sec);color:var(--text-sec);}
+  .log-fbtn.active-all{border-color:var(--accent-cyan);color:var(--accent-cyan);background:rgba(0,200,255,.07);}
+  .log-fbtn.active-in{border-color:var(--accent-green);color:var(--accent-green);background:rgba(0,255,136,.07);}
+  .log-fbtn.active-out{border-color:var(--accent-red);color:var(--accent-red);background:rgba(255,51,85,.07);}
   .log-feed{padding:8px;max-height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
   .log-feed::-webkit-scrollbar{width:3px;}
   .log-feed::-webkit-scrollbar-thumb{background:var(--border-dim);}
@@ -360,6 +372,16 @@
         <div class="log-header">
           <span class="log-title">TELEGRAM FEED</span>
           <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)" id="log-cnt">0 ENTRIES</span>
+        </div>
+        <div class="log-search-wrap">
+          <span class="log-search-icon">🔍</span>
+          <input class="log-search" id="log-search" type="text" placeholder="Cari kode saham atau formula..." oninput="filterLog()">
+          <button class="log-search-clear" id="log-search-clear" onclick="clearLogSearch()">✕</button>
+        </div>
+        <div class="log-filter-btns">
+          <button class="log-fbtn active-all" id="fbtn-all" onclick="setLogFilter('all')">SEMUA</button>
+          <button class="log-fbtn" id="fbtn-in"  onclick="setLogFilter('in')">✅ MASUK</button>
+          <button class="log-fbtn" id="fbtn-out" onclick="setLogFilter('out')">❌ KELUAR</button>
         </div>
         <div class="log-feed" id="log-feed"></div>
       </div>
@@ -937,6 +959,42 @@ function setConn(s,t){document.getElementById('conn-dot').className=`dot ${s==='
 function nowStr(){return new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 
 document.getElementById('modal-reset').addEventListener('click',function(e){if(e.target===this)closeResetModal();});
+
+// ════════════════════════════════════════
+// LOG SEARCH & FILTER
+// ════════════════════════════════════════
+let logFilter = 'all';
+
+function setLogFilter(type) {
+  logFilter = type;
+  ['all','in','out'].forEach(t => {
+    const btn = document.getElementById('fbtn-' + t);
+    btn.className = 'log-fbtn' + (t === type ? ' active-' + t : '');
+  });
+  filterLog();
+}
+
+function filterLog() {
+  const q     = (document.getElementById('log-search').value || '').toLowerCase().trim();
+  const clear = document.getElementById('log-search-clear');
+  clear.classList.toggle('show', q.length > 0);
+
+  const entries = document.querySelectorAll('#log-feed .log-entry');
+  entries.forEach(el => {
+    const text = el.textContent.toLowerCase();
+    const dot  = el.querySelector('.log-dot');
+    const type = dot?.classList.contains('in') ? 'in' : dot?.classList.contains('out') ? 'out' : 'rst';
+    const matchFilter = logFilter === 'all' || type === logFilter;
+    const matchSearch = !q || text.includes(q);
+    el.style.display = (matchFilter && matchSearch) ? '' : 'none';
+  });
+}
+
+function clearLogSearch() {
+  document.getElementById('log-search').value = '';
+  document.getElementById('log-search-clear').classList.remove('show');
+  filterLog();
+}
 document.getElementById('modal-stats').addEventListener('click',function(e){if(e.target===this)closeLoginStats();});
 document.getElementById('modal-info').addEventListener('click',function(e){if(e.target===this)closeInfoModal();});
 function openInfoModal()  { document.getElementById('modal-info').classList.add('show'); }
