@@ -165,6 +165,13 @@
   .scard-price{flex:1;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent-cyan);}
   .scard-price .lbl{font-size:9px;color:var(--text-dim);margin-right:3px;}
   .scard-time{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);}
+  .scard-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:11px;padding:2px 4px;margin-left:auto;opacity:0;transition:opacity .2s;line-height:1;flex-shrink:0;}
+  .scard:hover .scard-del{opacity:1;}
+  .scard-del:hover{color:var(--accent-red);}
+  /* Modal hapus saham */
+  .del-modal::before{background:linear-gradient(90deg,transparent,var(--accent-red),transparent);}
+  .del-stock-name{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;color:var(--accent-cyan);text-align:center;margin-bottom:4px;}
+  .del-formula{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);text-align:center;letter-spacing:1px;margin-bottom:16px;}
   .scard-badge{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;padding:2px 6px;border:1px solid;border-radius:0;white-space:nowrap;}
   .badge-marubozu{color:#f97316;border-color:rgba(249,115,22,.4);background:rgba(249,115,22,.08);}
   .badge-hammer  {color:#a855f7;border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.08);}
@@ -184,13 +191,13 @@
   .log-fbtn.active-all{border-color:var(--accent-cyan);color:var(--accent-cyan);background:rgba(0,200,255,.07);}
   .log-fbtn.active-in{border-color:var(--accent-green);color:var(--accent-green);background:rgba(0,255,136,.07);}
   .log-fbtn.active-out{border-color:var(--accent-red);color:var(--accent-red);background:rgba(255,51,85,.07);}
-  .log-feed{padding:8px;max-height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
+  .log-feed{padding:8px;max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
   .log-feed::-webkit-scrollbar{width:3px;}
   .log-feed::-webkit-scrollbar-thumb{background:var(--border-dim);}
   .log-entry{display:flex;gap:10px;align-items:flex-start;padding:4px 8px;font-family:'Share Tech Mono',monospace;font-size:10px;animation:fadeIn .3s ease;}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   .log-dot{width:5px;height:5px;border-radius:50%;margin-top:3px;flex-shrink:0;}
-  .log-dot.in{background:var(--accent-green);} .log-dot.out{background:var(--accent-red);} .log-dot.sys{background:var(--accent-cyan);} .log-dot.rst{background:var(--accent-gold);}
+  .log-dot.in{background:var(--accent-green);} .log-dot.out{background:var(--accent-red);} .log-dot.sys{background:var(--accent-cyan);} .log-dot.rst{background:var(--accent-gold);} .log-dot.del{background:var(--accent-purple);}
   .log-time{color:var(--text-dim);min-width:52px;}
   .log-msg{color:var(--text-sec);}
   .log-msg .tk{color:var(--accent-cyan);font-weight:bold;} .log-msg .fn{color:var(--accent-gold);} .log-msg .act-in{color:var(--accent-green);} .log-msg .act-out{color:var(--accent-red);} .log-msg .act-rst{color:var(--accent-gold);} .log-msg .px{color:var(--accent-cyan);}
@@ -592,7 +599,9 @@ const state = { formulas:{}, statsIn:0, statsOut:0 };
 FORMULAS.forEach(f => state.formulas[f.id] = { stocks:{} });
 state.formulas['bsjp'] = { stocks:{} };
 let logCount  = 0;
-let pollTimer = null;
+let allLogs      = [];  // Simpan semua log hari ini
+let logsLoaded   = false;  // Flag apakah log sudah dimuat dari server
+let pollTimer    = null;
 let sessionToken  = null;   // Token aktif
 let savedPassword = null;   // Simpan password untuk auto-relogin saat server restart
 let lockoutTimer  = null;
@@ -830,7 +839,7 @@ function removeStock(fid, ticker) {
 function clearAll() {
   FORMULAS.forEach(f=>{state.formulas[f.id].stocks={};const l=document.getElementById(`list-${f.id}`),c=document.getElementById(`cnt-${f.id}`);if(l)l.innerHTML=emptyHTML();if(c)c.textContent='0';});
   state.statsIn=0;state.statsOut=0;
-  document.getElementById('log-feed').innerHTML=''; logCount=0;
+  document.getElementById('log-feed').innerHTML=''; logCount=0; allLogs=[];
   document.getElementById('log-cnt').textContent='0 ENTRIES';
   updateStats(); addLog('rst',null,null,null,nowStr());
 }
@@ -851,6 +860,30 @@ async function poll() {
     if(data.server_time) document.getElementById('server-time').textContent=data.server_time;
     if(data.next_reset)  document.getElementById('next-reset').textContent=data.next_reset;
     if(data.reset_logs?.length) document.getElementById('last-reset').textContent=data.reset_logs[0].time;
+
+    // Load semua log dari server saat pertama kali (atau setelah refresh)
+    if (!logsLoaded && data.logs?.length) {
+      logsLoaded = true;
+      const feed = document.getElementById('log-feed');
+      if (feed) {
+        feed.innerHTML = '';
+        allLogs = [];
+        logCount = 0;
+        // Log dari server urut terbaru di index 0 — tampilkan terbalik agar terbaru di atas
+        [...data.logs].forEach(srv => {
+          const entry = { type: srv.type||'in', ticker: srv.ticker, fid: srv.fid||srv.formula, price: srv.price, time: srv.time };
+          allLogs.push(entry);
+          const el = makeLogEl(entry);
+          feed.appendChild(el);  // append (urutan server sudah terbaru di atas, kita balik)
+        });
+        // Balik urutan: terbaru di atas
+        const items = Array.from(feed.children);
+        items.reverse().forEach(el => feed.appendChild(el));
+        logCount = allLogs.length;
+        document.getElementById('log-cnt').textContent = logCount + ' ENTRIES';
+        filterLog();
+      }
+    }
     // ── Proses BSJP: gabungkan marubozu + shadow dari server ──
     // Step 1: bangun merged map dari server
     const bsjpServer = {};  // { ticker: { ...stock, subtypes:[...] } }
@@ -952,7 +985,36 @@ function showResetError(msg){const el=document.getElementById('reset-pw-error');
 // ════════════════════════════════════════
 function updateStats(){const total=Object.values(state.formulas).reduce((s,f)=>s+Object.keys(f.stocks).length,0);const active=FORMULAS.filter(f=>Object.keys(state.formulas[f.id]?.stocks||{}).length>0).length;document.getElementById('s-total').textContent=total;document.getElementById('s-in').textContent=state.statsIn;document.getElementById('s-out').textContent=state.statsOut;document.getElementById('s-form').textContent=active;}
 
-function addLog(type,ticker,fid,price,time){const fname=FORMULAS.find(f=>f.id===fid)?.name||fid;const feed=document.getElementById('log-feed');if(!feed)return;const el=document.createElement('div');el.className='log-entry';let msg='';if(type==='rst'){msg=`<span class="act-rst">⚡ RESET MANUAL — semua data dikosongkan</span>`;}else{const act=type==='in'?`<span class="act-in">MASUK</span>`:`<span class="act-out">KELUAR</span>`;const px=price?`<span class="px"> @ Rp${price}</span>`:'';msg=`<span class="tk">${ticker}</span>${px} ${act} · <span class="fn">${fname||''}</span>`;}el.innerHTML=`<span class="log-dot ${type}"></span><span class="log-time">${time||nowStr()}</span><span class="log-msg">${msg}</span>`;feed.insertBefore(el,feed.firstChild);logCount++;document.getElementById('log-cnt').textContent=`${logCount} ENTRIES`;}
+function makeLogEl(entry) {
+  const fname = FORMULAS.find(f=>f.id===entry.fid)?.name || entry.fid || '';
+  const el = document.createElement('div');
+  el.className = 'log-entry';
+  el.dataset.type = entry.type;
+  let msg = '';
+  if (entry.type === 'rst') {
+    msg = `<span class="act-rst">⚡ RESET MANUAL — semua data dikosongkan</span>`;
+  } else if (entry.type === 'del') {
+    const fname = FORMULAS.find(f=>f.id===entry.fid)?.name || entry.fid || '';
+    msg = `<span class="tk">${entry.ticker}</span> <span style="color:var(--accent-purple)">DIHAPUS ADMIN</span> · <span class="fn">${fname}</span>`;
+  } else {
+    const act = entry.type==='in' ? `<span class="act-in">MASUK</span>` : `<span class="act-out">KELUAR</span>`;
+    const px  = entry.price ? `<span class="px"> @ Rp${entry.price}</span>` : '';
+    msg = `<span class="tk">${entry.ticker}</span>${px} ${act} · <span class="fn">${fname}</span>`;
+  }
+  el.innerHTML = `<span class="log-dot ${entry.type}"></span><span class="log-time">${entry.time||'--:--'}</span><span class="log-msg">${msg}</span>`;
+  return el;
+}
+
+function addLog(type, ticker, fid, price, time) {
+  const entry = { type, ticker, fid, price, time: time||nowStr() };
+  allLogs.unshift(entry);  // simpan ke array
+  const feed = document.getElementById('log-feed');
+  if (!feed) return;
+  feed.insertBefore(makeLogEl(entry), feed.firstChild);
+  logCount++;
+  document.getElementById('log-cnt').textContent = `${logCount} ENTRIES`;
+  filterLog();  // terapkan filter aktif ke entri baru
+}
 
 function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),3000);}
 function setConn(s,t){document.getElementById('conn-dot').className=`dot ${s==='connected'?'green':s==='disconnected'?'red':'gold'}`;document.getElementById('conn-txt').textContent=t;}
@@ -980,14 +1042,21 @@ function filterLog() {
   clear.classList.toggle('show', q.length > 0);
 
   const entries = document.querySelectorAll('#log-feed .log-entry');
+  let visible = 0;
   entries.forEach(el => {
     const text = el.textContent.toLowerCase();
-    const dot  = el.querySelector('.log-dot');
-    const type = dot?.classList.contains('in') ? 'in' : dot?.classList.contains('out') ? 'out' : 'rst';
+    const type = el.dataset.type || '';
     const matchFilter = logFilter === 'all' || type === logFilter;
     const matchSearch = !q || text.includes(q);
     el.style.display = (matchFilter && matchSearch) ? '' : 'none';
+    if (matchFilter && matchSearch) visible++;
   });
+  // Update counter dengan jumlah yang terlihat
+  const total = allLogs.length;
+  const cntEl = document.getElementById('log-cnt');
+  if (cntEl) cntEl.textContent = q || logFilter !== 'all'
+    ? `${visible} / ${total} ENTRIES`
+    : `${total} ENTRIES`;
 }
 
 function clearLogSearch() {
