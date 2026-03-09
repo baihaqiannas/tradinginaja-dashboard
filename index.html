@@ -653,6 +653,7 @@ async function doLogin() {
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       initDashboard();
+      startHeartbeat();
 
     } else if (res.status === 429 && data.locked) {
       // IP dikunci — tampilkan countdown
@@ -1031,6 +1032,25 @@ function setConn(s,t){document.getElementById('conn-dot').className=`dot ${s==='
 function nowStr(){return new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 
 document.getElementById('modal-reset').addEventListener('click',function(e){if(e.target===this)closeResetModal();});
+// ════════════════════════════════════════
+// HEARTBEAT — sinyal online ke server
+// ════════════════════════════════════════
+async function sendHeartbeat() {
+  if (!sessionToken) return;
+  try {
+    await fetch(`${CONFIG.backendUrl}/api/heartbeat`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${sessionToken}` },
+    });
+  } catch(e) {}
+}
+
+function startHeartbeat() {
+  sendHeartbeat();
+  setInterval(sendHeartbeat, 30000);
+}
+
+
 
 // ════════════════════════════════════════
 // LOG SEARCH & FILTER
