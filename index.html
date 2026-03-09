@@ -184,6 +184,11 @@
   .log-search{flex:1;background:transparent;border:none;outline:none;color:var(--text-pri);font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;}
   .log-search::placeholder{color:var(--text-dim);}
   .log-search-clear{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:0;display:none;line-height:1;}
+  .log-sort-btns{display:flex;gap:4px;padding:6px 10px;border-bottom:1px solid var(--border-dim);background:rgba(0,0,0,.08);align-items:center;}
+  .log-sort-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-right:4px;}
+  .log-sbtn{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:3px 9px;border:1px solid var(--border-dim);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px;}
+  .log-sbtn:hover{border-color:var(--text-sec);color:var(--text-sec);}
+  .log-sbtn.active{border-color:var(--accent-cyan);color:var(--accent-cyan);background:rgba(0,200,255,.07);}
   .log-search-clear.show{display:block;}
   .log-filter-btns{display:flex;gap:4px;padding:6px 10px;border-bottom:1px solid var(--border-dim);background:rgba(0,0,0,.1);}
   .log-fbtn{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:3px 9px;border:1px solid var(--border-dim);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s;}
@@ -389,6 +394,12 @@
           <button class="log-fbtn active-all" id="fbtn-all" onclick="setLogFilter('all')">SEMUA</button>
           <button class="log-fbtn" id="fbtn-in"  onclick="setLogFilter('in')">✅ MASUK</button>
           <button class="log-fbtn" id="fbtn-out" onclick="setLogFilter('out')">❌ KELUAR</button>
+        </div>
+        <div class="log-sort-btns">
+          <span class="log-sort-lbl">SORT:</span>
+          <button class="log-sbtn active" id="sbtn-time"  onclick="setLogSort('time')">⏰ WAKTU <span id="sarr-time">↓</span></button>
+          <button class="log-sbtn"        id="sbtn-alpha" onclick="setLogSort('alpha')">🔤 SAHAM <span id="sarr-alpha">↓</span></button>
+          <button class="log-sbtn"        id="sbtn-price" onclick="setLogSort('price')">💰 HARGA <span id="sarr-price">↓</span></button>
         </div>
         <div class="log-feed" id="log-feed"></div>
       </div>
@@ -880,8 +891,7 @@ async function poll() {
         const items = Array.from(feed.children);
         items.reverse().forEach(el => feed.appendChild(el));
         logCount = allLogs.length;
-        document.getElementById('log-cnt').textContent = logCount + ' ENTRIES';
-        filterLog();
+        renderLogFeed();
       }
     }
     // ── Proses BSJP: gabungkan marubozu + shadow dari server ──
@@ -1013,7 +1023,7 @@ function addLog(type, ticker, fid, price, time) {
   feed.insertBefore(makeLogEl(entry), feed.firstChild);
   logCount++;
   document.getElementById('log-cnt').textContent = `${logCount} ENTRIES`;
-  filterLog();  // terapkan filter aktif ke entri baru
+  renderLogFeed();
 }
 
 function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),3000);}
@@ -1059,10 +1069,63 @@ function filterLog() {
     : `${total} ENTRIES`;
 }
 
+// ── Sort ──
+let logSort    = 'time';
+let logSortAsc = false;
+
+function setLogSort(type) {
+  if (logSort === type) { logSortAsc = !logSortAsc; }
+  else { logSort = type; logSortAsc = type !== 'time'; }
+  ['time','alpha','price'].forEach(t => {
+    const btn = document.getElementById('sbtn-' + t);
+    const arr = document.getElementById('sarr-' + t);
+    if (btn) btn.classList.toggle('active', t === logSort);
+    if (arr) arr.textContent = (t === logSort) ? (logSortAsc ? '↑' : '↓') : '↓';
+  });
+  renderLogFeed();
+}
+
+function getSortedLogs() {
+  const q = (document.getElementById('log-search')?.value || '').toLowerCase().trim();
+  const filtered = allLogs.filter(e => {
+    const matchFilter = logFilter === 'all' || e.type === logFilter;
+    const matchSearch = !q || (e.ticker||'').toLowerCase().includes(q) ||
+                        (FORMULAS.find(f=>f.id===e.fid)?.name||'').toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+  filtered.sort((a, b) => {
+    let va, vb;
+    if (logSort === 'time')       { va = a.time||''; vb = b.time||''; }
+    else if (logSort === 'alpha') { va = a.ticker||''; vb = b.ticker||''; }
+    else if (logSort === 'price') {
+      va = parseFloat((a.price||'0').toString().replace(/[^0-9.]/g,''))||0;
+      vb = parseFloat((b.price||'0').toString().replace(/[^0-9.]/g,''))||0;
+    }
+    if (va < vb) return logSortAsc ? -1 : 1;
+    if (va > vb) return logSortAsc ? 1 : -1;
+    return 0;
+  });
+  return filtered;
+}
+
+function renderLogFeed() {
+  const feed = document.getElementById('log-feed');
+  if (!feed) return;
+  const sorted = getSortedLogs();
+  feed.innerHTML = '';
+  sorted.forEach(e => feed.appendChild(makeLogEl(e)));
+  const q = (document.getElementById('log-search')?.value||'').toLowerCase().trim();
+  const cntEl = document.getElementById('log-cnt');
+  if (cntEl) cntEl.textContent = (q || logFilter !== 'all')
+    ? `${sorted.length} / ${allLogs.length} ENTRIES`
+    : `${allLogs.length} ENTRIES`;
+}
+
 function clearLogSearch() {
   document.getElementById('log-search').value = '';
-  document.getElementById('log-search-clear').classList.remove('show');
-  filterLog();
+  const clear = document.getElementById('log-search-clear');
+  if (clear) clear.classList.remove('show');
+  renderLogFeed();
 }
 document.getElementById('modal-stats').addEventListener('click',function(e){if(e.target===this)closeLoginStats();});
 document.getElementById('modal-info').addEventListener('click',function(e){if(e.target===this)closeInfoModal();});
