@@ -605,7 +605,7 @@ const FORMULAS = [
   { id:'open_low',         name:'Open == Low',               desc:'BULLISH SIGNAL',    icon:'📈', color:'gold'   },
   { id:'bid_offer_sepi',   name:'Bid Offer Sepi',            desc:'LOW SUPPLY',        icon:'🔇', color:'purple' },
   { id:'ritel_out_bandar', name:'Ritel Out Bandar Nyangkut', desc:'BANDAR TRAPPED',    icon:'🏦', color:'orange' },
-  { id:'bsjp',             name:'BSJP',                        desc:'BELI SORE JUAL PAGI', icon:'🌙', color:'teal',   combined:['bsjp_marubozu','bsjp_hammer'] },
+  { id:'bsjp',             name:'BSJP',                        desc:'BELI SORE JUAL PAGI', icon:'🌙', color:'teal',   combined:['bsjp_marubozu','bsjp_hammer','bsjp_manual'] },
 ];
 
 // ── STATE ──
@@ -901,8 +901,8 @@ async function poll() {
     // ── Proses BSJP: gabungkan marubozu + shadow dari server ──
     // Step 1: bangun merged map dari server
     const bsjpServer = {};  // { ticker: { ...stock, subtypes:[...] } }
-    ['bsjp_marubozu','bsjp_hammer'].forEach(fid => {
-      const subtype = fid === 'bsjp_marubozu' ? 'marubozu' : 'hammer';
+    ['bsjp_marubozu','bsjp_hammer','bsjp_manual'].forEach(fid => {
+      const subtype = fid === 'bsjp_marubozu' ? 'marubozu' : fid === 'bsjp_hammer' ? 'hammer' : null;
       Object.entries(data.formulas?.[fid]?.stocks || {}).forEach(([t, s]) => {
         if (bsjpServer[t]) {
           // Ticker sudah ada dari kriteria lain → tambah badge, harga tetap pertama
@@ -956,7 +956,7 @@ async function poll() {
 
     // ── Proses formula biasa ──
     Object.entries(data.formulas||{}).forEach(([fid,fd])=>{
-      if (fid === 'bsjp_marubozu' || fid === 'bsjp_hammer') return; // sudah diproses
+      if (fid === 'bsjp_marubozu' || fid === 'bsjp_hammer' || fid === 'bsjp_manual') return; // sudah diproses
       Object.entries(fd.stocks||{}).forEach(([t,s])=>{if(!state.formulas[fid]?.stocks[t])addStock(fid,s);});
       Object.keys(state.formulas[fid]?.stocks||{}).forEach(t=>{if(!fd.stocks?.[t])removeStock(fid,t);});
     });
