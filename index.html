@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tradinginaja Alert Saham</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
     --bg-deep:      #050a0f;
@@ -370,9 +369,6 @@
   </div>
 
   <div class="main">
-    <button onclick="downloadExcel()" id="btn-excel" style="width:100%;margin-bottom:10px;padding:11px;background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.4);color:#00ff88;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,136,.14)'" onmouseout="this.style.background='rgba(0,255,136,.06)'">
-      <span>📊</span> UNDUH REKAP ALERT — EXCEL (.XLSX)
-    </button>
     <button onclick="openInfoModal()" style="width:100%;margin-bottom:10px;padding:11px;background:rgba(255,200,32,.06);border:1px solid rgba(255,200,32,.3);color:var(--accent-gold);font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;" onmouseover="this.style.background='rgba(255,200,32,.12)'" onmouseout="this.style.background='rgba(255,200,32,.06)'">
       <span>📖</span> PANDUAN & INFO JENIS ALERT — BACA SEBELUM TRADING
     </button>
@@ -1241,107 +1237,6 @@ function closeLoginStats() { document.getElementById('modal-stats').classList.re
 })();
 setInterval(()=>{const c=document.getElementById('clock');if(c)c.textContent=nowStr();},1000);
 window.addEventListener('DOMContentLoaded',()=>document.getElementById('login-pw').focus());
-
-// ════════════════════════════════════════
-// UNDUH REKAP ALERT — EXCEL
-// ════════════════════════════════════════
-function getFormulaLabel(fid) {
-  const map = {
-    serok_gila:       'Serok Gila',
-    breakout:         'Breakout',
-    open_low:         'Open == Low',
-    bid_offer_sepi:   'Bid Offer Sepi',
-    ritel_out_bandar: 'Ritel Out Bandar Nyangkut',
-    bsjp:             'BSJP',
-    bsjp_marubozu:    'BSJP',
-    bsjp_hammer:      'BSJP',
-    bsjp_manual:      'BSJP',
-  };
-  return map[fid] || fid || '-';
-}
-
-function downloadExcel() {
-  const btn = document.getElementById('btn-excel');
-  btn.textContent = '⏳ Menyiapkan file...';
-
-  try {
-    const today = new Date().toLocaleDateString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric'});
-
-    // Kumpulkan data dari allLogs (hanya event 'in' = alert masuk)
-    const alertsIn = allLogs.filter(e => e.type === 'in');
-
-    // Deduplicate: jika ticker + fid sama, ambil yang pertama
-    const seen = new Set();
-    const rows = [];
-
-    alertsIn.forEach(e => {
-      const key = `${e.ticker}_${e.fid}`;
-      if (seen.has(key)) return;
-      seen.add(key);
-      rows.push({
-        'Tanggal':       today,
-        'Jam Alert':     e.time || '-',
-        'Nama Saham':    e.ticker || '-',
-        'Formula':       getFormulaLabel(e.fid),
-        'Harga Alert':   e.price ? Number(String(e.price).replace(/[^0-9.]/g,'')) || e.price : '-',
-        'Harga Final':   '',   // dikosongkan, diisi manual
-        '% Change':      '',   // dikosongkan, diisi manual
-      });
-    });
-
-    // Jika allLogs kosong, coba ambil dari state saham aktif
-    if (rows.length === 0) {
-      FORMULAS.forEach(f => {
-        Object.values(state.formulas[f.id]?.stocks || {}).forEach(s => {
-          rows.push({
-            'Tanggal':     today,
-            'Jam Alert':   s.time || '-',
-            'Nama Saham':  s.ticker || '-',
-            'Formula':     f.name,
-            'Harga Alert': s.price ? Number(String(s.price).replace(/[^0-9.]/g,'')) || s.price : '-',
-            'Harga Final': '',
-            '% Change':    '',
-          });
-        });
-      });
-    }
-
-    if (rows.length === 0) {
-      btn.textContent = '⚠️ Tidak ada data alert hari ini';
-      setTimeout(() => { btn.innerHTML = '<span>📊</span> UNDUH REKAP ALERT — EXCEL (.XLSX)'; }, 2500);
-      return;
-    }
-
-    // Buat workbook
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows);
-
-    // Lebar kolom
-    ws['!cols'] = [
-      { wch: 12 }, // Tanggal
-      { wch: 10 }, // Jam Alert
-      { wch: 14 }, // Nama Saham
-      { wch: 26 }, // Formula
-      { wch: 14 }, // Harga Alert
-      { wch: 14 }, // Harga Final
-      { wch: 12 }, // % Change
-    ];
-
-    XLSX.utils.book_append_sheet(wb, ws, 'Rekap Alert');
-
-    // Nama file pakai tanggal hari ini
-    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
-    XLSX.writeFile(wb, `rekap_alert_${dateStr}.xlsx`);
-
-    btn.innerHTML = '✅ FILE BERHASIL DIUNDUH!';
-    setTimeout(() => { btn.innerHTML = '<span>📊</span> UNDUH REKAP ALERT — EXCEL (.XLSX)'; }, 3000);
-
-  } catch(err) {
-    console.error(err);
-    btn.innerHTML = '❌ GAGAL — Coba lagi';
-    setTimeout(() => { btn.innerHTML = '<span>📊</span> UNDUH REKAP ALERT — EXCEL (.XLSX)'; }, 2500);
-  }
-}
 </script>
 </body>
 </html>
